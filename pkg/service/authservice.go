@@ -44,8 +44,7 @@ func (s *AuthService) GenerateToken(username, password string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	fmt.Println("user model", user)
-	token := jwt.NewWithClaims(jwt.SigningMethodES256,
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		&tokenClaims{
 			StandardClaims: jwt.StandardClaims{
 				ExpiresAt: time.Now().Add(tokenTTL).Unix(),
