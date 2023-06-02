@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"todolist/pkg/handler"
 	"todolist/pkg/repository"
@@ -10,6 +11,7 @@ import (
 	"todolist"
 
 	"github.com/spf13/viper"
+	"github.com/subosito/gotenv"
 )
 
 func main() {
@@ -17,7 +19,23 @@ func main() {
 		log.Printf("initConfig err: %v", err)
 		return
 	}
-	repos := repository.NewRepository()
+	if err := gotenv.Load(); err != nil {
+		log.Printf("error in gotenv.Load: %v", err)
+		return
+	}
+	db, err := repository.NewPostgresDB(repository.Config{
+		Host:     viper.GetString("db.host"),
+		Port:     viper.GetString("db.port"),
+		UserName: viper.GetString("db.username"),
+		Password: os.Getenv("DB_PASSWORD"),
+		DBname:   viper.GetString("db.dbname"),
+		SSLMode:  viper.GetString("db.sslmode"),
+	})
+	if err != nil {
+		log.Printf("error in db: %v", err)
+		return
+	}
+	repos := repository.NewRepository(db)
 	service := service.NewService(*repos)
 	handlers := handler.NewHandler(service)
 	srv := new(todolist.Server)
