@@ -73,3 +73,19 @@ func (r *ListRepos) GetAllLists(userId int) ([]todolist.TodoList, error) {
 	}
 	return lists, tx.Commit()
 }
+
+func (r *ListRepos) GetListById(userId, listId int) (todolist.TodoList, error) {
+	query := `SELECT title,description FROM todo_lists INNER JOIN users_lists ON todo_lists.id =users_lists.list_id
+	where users_lists.user_id = $1 AND users_lists.list_id=$2`
+	tx, err := r.DB.Begin()
+	if err != nil {
+		return todolist.TodoList{}, err
+	}
+	list := todolist.TodoList{}
+	if err := tx.QueryRow(query, userId, listId).Scan(&list.Title, &list.Description); err != nil {
+		tx.Rollback()
+		logrus.Printf("GetListById err: %v", err)
+		return todolist.TodoList{}, err
+	}
+	return list, nil
+}

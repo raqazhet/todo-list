@@ -3,6 +3,7 @@ package handler
 import (
 	"log"
 	"net/http"
+	"strconv"
 
 	"todolist"
 
@@ -49,6 +50,24 @@ func (h *Handler) getAllLists(c *gin.Context) {
 }
 
 func (h *Handler) getListByID(c *gin.Context) {
+	userId, err := getUserId(c)
+	if err != nil {
+		logrus.Printf("err in getUserId method: %v", err)
+		return
+	}
+	listid, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	list, err := h.service.GetListById(userId, listid)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	c.JSON(http.StatusOK, map[string]interface{}{
+		"oneList": list,
+	})
 }
 func (h *Handler) updateList(c *gin.Context) {}
 func (h *Handler) deleteList(c *gin.Context) {
