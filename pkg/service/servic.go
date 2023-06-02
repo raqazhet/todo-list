@@ -9,6 +9,7 @@ type (
 	Authorization interface {
 		CreateUser(user todolist.User) (int, error)
 		GenerateToken(username, password string) (string, error)
+		ParseToken(token string) (int, error)
 	}
 	TodoList interface{}
 	TodoItem interface{}
