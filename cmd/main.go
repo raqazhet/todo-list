@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"os"
 
 	"todolist/pkg/handler"
@@ -10,17 +9,19 @@ import (
 
 	"todolist"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/subosito/gotenv"
 )
 
 func main() {
+	logrus.SetFormatter(new(logrus.JSONFormatter))
 	if err := InitConfig(); err != nil {
-		log.Printf("initConfig err: %v", err)
+		logrus.Printf("initConfig err: %v", err)
 		return
 	}
 	if err := gotenv.Load(); err != nil {
-		log.Printf("error in gotenv.Load: %v", err)
+		logrus.Printf("error in gotenv.Load: %v", err)
 		return
 	}
 	db, err := repository.NewPostgresDB(repository.Config{
@@ -32,15 +33,15 @@ func main() {
 		SSLMode:  viper.GetString("db.sslmode"),
 	})
 	if err != nil {
-		log.Printf("error in db: %v", err)
+		logrus.Printf("error in db: %v", err)
 		return
 	}
 	repos := repository.NewRepository(db)
 	service := service.NewService(*repos)
 	handlers := handler.NewHandler(service)
 	srv := new(todolist.Server)
-	if err := srv.Run(viper.GetString("8000"), handlers.InitRoutes()); err != nil {
-		log.Fatalf("error occured while running http server: %v", err)
+	if err := srv.Run(viper.GetString("port"), handlers.InitRoutes()); err != nil {
+		logrus.Fatalf("error occured while running http server: %v", err)
 	}
 }
 
