@@ -71,4 +71,22 @@ func (h *Handler) getListByID(c *gin.Context) {
 }
 func (h *Handler) updateList(c *gin.Context) {}
 func (h *Handler) deleteList(c *gin.Context) {
+	userId, err := getUserId(c)
+	if err != nil {
+		logrus.Printf("err in getUserId method: %v", err)
+		return
+	}
+	listid, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if err := h.service.TodoList.Delete(userId, listid); err != nil {
+		logrus.Printf("error in deleteList handler")
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	c.JSON(http.StatusOK, statusResponse{
+		Status: "ok",
+	})
 }

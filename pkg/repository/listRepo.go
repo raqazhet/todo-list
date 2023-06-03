@@ -89,3 +89,15 @@ func (r *ListRepos) GetListById(userId, listId int) (todolist.TodoList, error) {
 	}
 	return list, nil
 }
+
+func (r *ListRepos) Delete(userId, listId int) error {
+	query := `DELETE FROM todo_lists
+	 USING users_lists
+	 WHERE todo_lists.id =users_lists.list_id AND users_lists.user_id = $1 AND users_lists.list_id=$2`
+	_, err := r.DB.Exec(query, userId, listId)
+	if err != nil {
+		logrus.Printf("Delete todo_lists err: %v", err)
+		return err
+	}
+	return nil
+}
