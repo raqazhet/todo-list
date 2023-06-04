@@ -1,7 +1,10 @@
 package main
 
 import (
+	"context"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"todolist/pkg/handler"
 	"todolist/pkg/repository"
@@ -13,6 +16,17 @@ import (
 	"github.com/spf13/viper"
 	"github.com/subosito/gotenv"
 )
+
+// @title  QR
+// @version 1.0
+// @description API server for todolist Application
+
+// @host localhost:8000
+// @BasePath /
+
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
 
 func main() {
 	logrus.SetFormatter(new(logrus.JSONFormatter))
@@ -40,9 +54,19 @@ func main() {
 	service := service.NewService(*repos)
 	handlers := handler.NewHandler(service)
 	srv := new(todolist.Server)
-	if err := srv.Run(viper.GetString("port"), handlers.InitRoutes()); err != nil {
-		logrus.Fatalf("error occured while running http server: %v", err)
+	go func() {
+		if err := srv.Run(viper.GetString("port"), handlers.InitRoutes()); err != nil {
+			logrus.Fatalf("error occured while running http server: %v", err)
+		}
+	}()
+	logrus.Print("todoApp started")
+	quite := make(chan os.Signal, 1)
+	signal.Notify(quite, syscall.SIGINT, syscall.SIGINT)
+	<-quite
+	if err := srv.Shutdown(context.Background()); err != nil {
+		return
 	}
+	logrus.Print("TodoApp shutting down")
 }
 
 func InitConfig() error {

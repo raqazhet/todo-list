@@ -101,3 +101,20 @@ func (r *ListRepos) Delete(userId, listId int) error {
 	}
 	return nil
 }
+
+func (r *ListRepos) UpdateListInout(userid, listID int, input todolist.UpdateListInput) error {
+	query := `UPDATE todo_lists
+	SET title=$1, description=$2
+	WHERE id IN (
+		SELECT list_id
+		FROM users_lists
+		WHERE user_id = $3 AND list_id = $4
+	)`
+
+	_, err := r.DB.Exec(query, input.Title, input.Description, userid, listID)
+	if err != nil {
+		logrus.Printf("updateList err: %v", err)
+		return err
+	}
+	return nil
+}

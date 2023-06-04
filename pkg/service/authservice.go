@@ -28,7 +28,7 @@ type tokenClaims struct {
 	UserId int `json:"user_id"`
 }
 
-func NewAuthService(repo repository.Repository) *AuthService {
+func NewAuthService(repo repository.Authorization) *AuthService {
 	return &AuthService{
 		repo: repo,
 	}

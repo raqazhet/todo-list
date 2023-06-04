@@ -18,16 +18,20 @@ func NewAuthRepo(db *sqlx.DB) *AuthRepo {
 }
 
 func (r *AuthRepo) CreateUser(user todolist.User) (int, error) {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return 0, err
+	}
 	query := `INSERT INTO users (name, username,password_hash)
 	VALUES ($1,$2,$3) RETURNING id`
 	args := []any{user.Name, user.Username, user.Password}
-	rows := r.db.QueryRow(query, args...)
 	id := 0
-	if err := rows.Scan(&id); err != nil {
+	if err := tx.QueryRow(query, args...).Scan(&id); err != nil {
+		tx.Rollback()
 		logrus.Printf("scan err: %v", err)
 		return 0, err
 	}
-	return id, nil
+	return id, tx.Commit()
 }
 
 func (r *AuthRepo) GetUser(username, password string) (todolist.User, error) {
