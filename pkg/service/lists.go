@@ -1,16 +1,24 @@
 package service
 
 import (
+	"strconv"
+	"time"
+
 	"todolist"
+	"todolist/pkg/redisC"
 	"todolist/pkg/repository"
 )
 
 type ListsService struct {
-	repo repository.TodoList
+	repo  repository.TodoList
+	cashe *redisC.RedisCashe
 }
 
-func NewListService(repo repository.TodoList) *ListsService {
-	return &ListsService{repo: repo}
+func NewListService(repo repository.TodoList, cashe *redisC.RedisCashe) *ListsService {
+	return &ListsService{
+		repo:  repo,
+		cashe: cashe,
+	}
 }
 
 func (s *ListsService) CreateList(userId int, list todolist.TodoList) (int, error) {
@@ -22,7 +30,31 @@ func (s *ListsService) CreateList(userId int, list todolist.TodoList) (int, erro
 }
 
 func (s *ListsService) GetAllLists(userId int) ([]todolist.TodoList, error) {
-	return s.repo.GetAllLists(userId)
+	value, err := s.cashe.Get("lists:" + strconv.Itoa(userId))
+	if err == nil {
+		cashedata, ok := value.(map[string]interface{})
+		if ok {
+			listsc := []todolist.TodoList{}
+			list := todolist.TodoList{
+				Id:          int(cashedata["id"].(float64)),
+				Title:       cashedata["title"].(string),
+				Description: cashedata["description"].(string),
+			}
+			listsc = append(listsc, list)
+
+			return listsc, nil
+		}
+	}
+	lists, err := s.repo.GetAllLists(userId)
+	if err != nil {
+		return nil, err
+	}
+	err = s.cashe.Set("lists:"+strconv.Itoa(userId), lists, time.Hour)
+	if err != nil {
+		return nil, err
+	}
+
+	return lists, nil
 }
 
 func (s *ListsService) GetListById(userId, listId int) (todolist.TodoList, error) {

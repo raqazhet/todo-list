@@ -1,37 +1,3 @@
-# version: '3.8'
-
-# networks:
-#   internal:
-#     driver: bridge
-
-# services:
-#   app:
-#     build: ./
-#     command: ./wait-for-postgres.sh db  ./app
-#     ports:
-#       - 8000:8000
-#     depends_on:
-#       - db
-#     networks:
-#       - internal
-#     environment:
-#       - DB_PASSWORD=qwerty
-#   db:
-#     restart: always
-#     image: postgres
-#     volumes:
-#     - ./schema:/docker-entrypoint-initdb.d/
-#     - db-data:/var/lib/postgresql/data
-#     networks:
-#       - internal
-#     environment:
-#       - POSTGRES_PASSWORD=qwerty
-#     ports:
-#       - 5436:5432
-
-# volumes:
-#   db-data:
-
 version: '3.8'
 
 networks:
@@ -49,6 +15,7 @@ services:
       - 8000:8000
     depends_on:
       - db
+      - redis
     environment:
       - DB_PASSWORD=qwerty
   db:
@@ -70,3 +37,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  redis:
+    image: redis
+    ports:
+    - "6379:6379"
+    depends_on:
+      - db

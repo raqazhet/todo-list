@@ -2,6 +2,7 @@ package service
 
 import (
 	"todolist"
+	"todolist/pkg/redisC"
 	"todolist/pkg/repository"
 )
 
@@ -33,10 +34,10 @@ type Service struct {
 	TodoItem
 }
 
-func NewService(repo repository.Repository) *Service {
+func NewService(repo repository.Repository, cashe *redisC.RedisCashe) *Service {
 	return &Service{
-		Authorization: NewAuthService(repo.Authorization),
-		TodoList:      NewListService(repo.TodoList),
+		Authorization: NewAuthService(repo.Authorization, cashe),
+		TodoList:      NewListService(repo.TodoList, cashe),
 		TodoItem:      NewItemService(repo.TodoList, repo.TodoItem),
 	}
 }

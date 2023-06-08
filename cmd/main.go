@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"todolist/pkg/handler"
+	"todolist/pkg/redisC"
 	"todolist/pkg/repository"
 	"todolist/pkg/service"
 
@@ -50,8 +51,10 @@ func main() {
 		logrus.Printf("error in db: %v", err)
 		return
 	}
+	casheRedis := redisC.NewCasheRedis()
 	repos := repository.NewRepository(db)
-	service := service.NewService(*repos)
+
+	service := service.NewService(*repos, casheRedis)
 	handlers := handler.NewHandler(service)
 	srv := new(todolist.Server)
 	go func() {

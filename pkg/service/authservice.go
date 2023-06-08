@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"todolist"
+	"todolist/pkg/redisC"
 	"todolist/pkg/repository"
 
 	"github.com/dgrijalva/jwt-go"
@@ -14,7 +15,8 @@ import (
 )
 
 type AuthService struct {
-	repo repository.Authorization
+	repo  repository.Authorization
+	cashe *redisC.RedisCashe
 }
 
 const (
@@ -28,15 +30,20 @@ type tokenClaims struct {
 	UserId int `json:"user_id"`
 }
 
-func NewAuthService(repo repository.Authorization) *AuthService {
+func NewAuthService(repo repository.Authorization, cahe *redisC.RedisCashe) *AuthService {
 	return &AuthService{
-		repo: repo,
+		repo:  repo,
+		cashe: cahe,
 	}
 }
 
 func (s *AuthService) CreateUser(user todolist.User) (int, error) {
 	user.Password = generatePasswordHash(user.Password)
-	return s.repo.CreateUser(user)
+	san, err := s.repo.CreateUser(user)
+	if err != nil {
+		return 0, err
+	}
+	return san, nil
 }
 
 func (s *AuthService) GenerateToken(username, password string) (string, error) {
