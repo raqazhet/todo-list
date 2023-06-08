@@ -1,9 +1,50 @@
+# version: '3.8'
+
+# networks:
+#   internal:
+#     driver: bridge
+
+# services:
+#   app:
+#     build: ./
+#     command: ./wait-for-postgres.sh db  ./app
+#     ports:
+#       - 8000:8000
+#     depends_on:
+#       - db
+#     networks:
+#       - internal
+#     environment:
+#       - DB_PASSWORD=qwerty
+#   db:
+#     restart: always
+#     image: postgres
+#     volumes:
+#     - ./schema:/docker-entrypoint-initdb.d/
+#     - db-data:/var/lib/postgresql/data
+#     networks:
+#       - internal
+#     environment:
+#       - POSTGRES_PASSWORD=qwerty
+#     ports:
+#       - 5436:5432
+
+# volumes:
+#   db-data:
+
 version: '3.8'
+
+networks:
+  internal:
+    driver: bridge
 
 services:
   app:
     build: ./
-    command: ./wait-for-postgres.sh db  ./app
+    command: ./app
+    restart: always
+    networks:
+      - internal
     ports:
       - 8000:8000
     depends_on:
@@ -14,12 +55,18 @@ services:
     restart: always
     image: postgres
     volumes:
-    - ./schema:/docker-entrypoint-initdb.d/
-    - db-data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_PASSWORD=qwerty
+      - ./schema:/docker-entrypoint-initdb.d/
+    networks:
+      - internal
     ports:
       - 5436:5432
-
-volumes:
-  db-data:
+    environment:
+      - POSTGRES_DB=test
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=qwerty
+    command: postgres -c 'shared_preload_libraries='
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
